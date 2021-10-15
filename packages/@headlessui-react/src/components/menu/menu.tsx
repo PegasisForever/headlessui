@@ -500,9 +500,10 @@ function Item<TTag extends ElementType = typeof DEFAULT_ITEM_TAG>(
   props: Props<TTag, ItemRenderPropArg, MenuItemPropsWeControl> & {
     disabled?: boolean
     onClick?: (event: { preventDefault: Function }) => void
+    keepOpen?: boolean
   }
 ) {
-  let { disabled = false, onClick, ...passthroughProps } = props
+  let { disabled = false, onClick, keepOpen, ...passthroughProps } = props
   let [state, dispatch] = useMenuContext([Menu.name, Item.name].join('.'))
   let id = `headlessui-menu-item-${useId()}`
   let active = state.activeItemIndex !== null ? state.items[state.activeItemIndex].id === id : false
@@ -533,11 +534,13 @@ function Item<TTag extends ElementType = typeof DEFAULT_ITEM_TAG>(
   let handleClick = useCallback(
     (event: MouseEvent) => {
       if (disabled) return event.preventDefault()
-      dispatch({ type: ActionTypes.CloseMenu })
-      disposables().nextFrame(() => state.buttonRef.current?.focus({ preventScroll: true }))
+      if (!keepOpen) {
+        dispatch({ type: ActionTypes.CloseMenu })
+        disposables().nextFrame(() => state.buttonRef.current?.focus({ preventScroll: true }))
+      }
       if (onClick) return onClick(event)
     },
-    [dispatch, state.buttonRef, disabled, onClick]
+    [dispatch, state.buttonRef, disabled, onClick, keepOpen]
   )
 
   let handleFocus = useCallback(() => {
